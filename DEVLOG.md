@@ -15,7 +15,21 @@
 ## 进度
 
 - [x] 2026-10-23 环境确认（Blender 5.2 / node24 / gh=yjj0339 / playwright@xiaoren-bike）
-- [x] tools/build_stadium.py（Mimosa 拦变量路径写文件→报告改走 stdout）
-- [ ] Blender model.glb + js/model-data.js（base64 内嵌）
-- [ ] 各 JS 模块
-- [ ] 冒烟测试 / 部署 yjj0339.github.io/xue-concert
+- [x] 2026-10-23 tools/build_stadium.py（Mimosa 拦变量路径写文件→报告改走 stdout）
+- [x] 2026-10-23 Blender model.glb(255KB, Draco) + js/model-data.js(base64 内嵌)
+- [x] 2026-10-23 全部 11 个 JS 模块 + index.html + show.css；Playwright 冒烟修完（updateRange→addUpdateRange / LED墙补UV / seek状态重建 / 全局提亮）
+- [x] 2026-10-24 部署 yjj0339.github.io/xue-concert（200+MIME 全对；线上全流程过门测试）
+- [x] 2026-10-24 v1.1 全面升级：**浅色主题默认**（?theme=dark 可切，顶栏按钮+localStorage）、**原生中文**（去 Google Fonts，本地字体栈）、GPU 识别加 Arc/Apple M、画质预算上调（high 2.2MP/4xMSAA、ultra 4.0MP）、稳定性（模块初始化隔离 try/catch、webglcontextlost 保护、自适应 6s 预热）
+- [x] 2026-10-24 修关键 bug：clampNum 把未指定 scale 钳到 0.25 → 全局 1/4 分辨率渲染（renderAt 35KB→351KB 证实）
+- [x] 2026-10-24 导航主页卡片 + 二维码上线
+
+## 大坑记录（新人必读）
+
+1. **clampNum(null, def, min, max) 会把 null 钳到 min**——参数默认值为 null 的数值参数全部中招，scale=0.25 全局降分辨率。数值参数解析必须先 isFinite 判断。
+2. **手搓 bmesh 没写 UV → glTF 无 TEXCOORD → ShaderMaterial uv 恒 (0,0)**，LED 墙全屏暗色单色。自定义 bmesh 网格凡是要贴图的必须 `bm.loops.layers.uv.new()` + 逐 loop 赋值。
+3. three r160 `BufferAttribute.updateRange` 只读，要用 `clearUpdateRanges()+addUpdateRange(off,len)`。
+4. three r160 动态 import(importmap) 的 `base` 变量不能跨两个 .then 闭包，要包一层对象传递。
+5. Mimosa 拦截：`pool.spawn()` 误判 child_process.spawn（改 emit）；Blender 脚本变量路径写文件（改字面量+stdout 报告）；Bash 直写源码（走 Write/工具脚本）。
+6. `bm.verts[i]` 索引前必须 ensure_lookup_table 或直接持有引用。
+7. seek 语义：一次性 cue（烟花/CO2）不重放，但持续性灯光状态（LED/光束/火龙卷/镜球/星河…）必须按时间区间重建（fx.seekTo），否则截图/跳章全黑。
+8. 测试时 CDN 强制 npmmirror 稳定；线上默认探测 jsdelivr→unpkg→npmmirror。
