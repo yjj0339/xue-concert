@@ -4,9 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const { chromium } = require('E:/ZCODE/xiaoren-bike/node_modules/playwright-core');
 
-const BASE = 'http://127.0.0.1:8137/';
+const BASE = process.argv[2] && process.argv[2].startsWith('http') ? process.argv[2] : 'http://127.0.0.1:8137/';
 const TAG = process.argv[3] || 'run';
-const SUFFIX = process.argv[2] || '?gate=0&stats=1&cdn=npmmirror';
+const SUFFIX = process.argv[2] && process.argv[2].startsWith('http') ? '' : (process.argv[2] || '?gate=0&stats=1&cdn=npmmirror');
 const SHOTS = path.join(__dirname, '..', 'shots');
 
 (async () => {
@@ -24,7 +24,13 @@ const SHOTS = path.join(__dirname, '..', 'shots');
 
   await page.goto(BASE + 'index.html' + SUFFIX, { waitUntil: 'domcontentloaded', timeout: 30000 });
   try {
-    await page.waitForFunction(() => window.__viewer && window.__viewer.state && window.__viewer.state.started, null, { timeout: 60000 });
+    await page.waitForFunction(() => window.__viewer, null, { timeout: 60000 });
+    // 入场门默认开启时点击「静音进入」
+    await page.evaluate(() => {
+      var b = document.getElementById('kob-enter-mute');
+      if (b && b.closest('#kob-enter') && b.closest('#kob-enter').classList.contains('ready')) b.click();
+    });
+    await page.waitForFunction(() => window.__viewer && window.__viewer.state && window.__viewer.state.started, null, { timeout: 30000 });
   } catch (e) {
     await page.screenshot({ path: path.join(SHOTS, TAG + '-boot-fail.png') });
     const msg = await page.evaluate(() => ({

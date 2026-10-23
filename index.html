@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>万兽之王 · 鸟巢 — King of Beasts Live</title>
 <meta name="description" content="薛之谦「万兽之王」鸟巢演唱会 · 实时三维灯光秀（非官方 · 技术演示）。纯浏览器运行：135 秒 10 章节导演秀、自由机位、特效台、灯牌与无人机编队编辑器。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;500;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@300;500;900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<script>
+/* 主题先行（避免闪变）：URL ?theme= > localStorage > 默认浅色 */
+(function () {
+  var m = location.search.match(/[?&]theme=(light|dark)/);
+  var t = m ? m[1] : 'light';
+  try { if (!m) t = localStorage.getItem('kob.theme') || 'light'; } catch (e) { }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
 <link rel="stylesheet" href="css/show.css">
 <script>
 /* =====================================================================
@@ -59,6 +66,10 @@ window.KOB_CONFIG = {
     <button class="kob-ibtn off" id="kob-btn-sound" title="声音 (M)">
       <svg viewBox="0 0 24 24" class="ic ic-on"><path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 8a5 5 0 0 1 0 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <svg viewBox="0 0 24 24" class="ic ic-off"><path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button class="kob-ibtn" id="kob-btn-theme" title="浅色/深色主题">
+      <svg viewBox="0 0 24 24" class="ic ic-on"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" class="ic ic-off"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
     </button>
     <button class="kob-ibtn" id="kob-btn-quality" title="画质">
       <svg viewBox="0 0 24 24"><path d="M12 4l2.4 5.2L20 10l-4 3.8.9 5.6L12 16.8 7.1 19.4 8 13.8 4 10l5.6-.8L12 4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>

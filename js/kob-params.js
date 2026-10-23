@@ -57,6 +57,7 @@ var SPEC = {
   /* 界面 */
   ui:       { d: true, b: true },
   letterbox:{ d: true, b: true },
+  theme:    { d: 'light', oneOf: ['light', 'dark'] },
   idle:     { d: 0, min: 0, max: 600 },
   stats:    { d: false, b: true },
   gate:     { d: true, b: true },

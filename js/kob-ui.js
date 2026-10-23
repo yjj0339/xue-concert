@@ -15,7 +15,7 @@ window.KOB.onReady(function (ctx) {
     titleCard: $('kob-title-card'), eye: $('kob-eye'), stats: $('kob-stats'),
     backShow: $('kob-backshow'), modePlay: $('kob-mode-play'), modeFree: $('kob-mode-free'),
     btnPlay: $('kob-btn-play'), letterTop: $('kob-lt'), letterBottom: $('kob-lb'),
-    fxPanel: null, hud: $('kob-hud')
+    btnTheme: $('kob-btn-theme'), fxPanel: null, hud: $('kob-hud')
   };
   var mode = 'play';
   var lastAct = performance.now();
@@ -83,6 +83,7 @@ window.KOB.onReady(function (ctx) {
   bind(els.btnSound, 'click', function () { ctx.main.toggleSound(); syncSound(ctx.audio && ctx.audio.isOn()); });
   bind(els.btnFull, 'click', function () { ctx.main.fullscreen(); });
   bind(els.btnHide, 'click', function () { hideByUser(); });
+  bind(els.btnTheme, 'click', function () { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); });
   bind(els.btnQuality, 'click', function (e) { if (els.qmenu) els.qmenu.classList.toggle('open'); e.stopPropagation(); });
   bind(document, 'click', function (e) {
     if (els.qmenu && els.qmenu.classList.contains('open') && !els.qmenu.contains(e.target)) els.qmenu.classList.remove('open');
@@ -98,6 +99,12 @@ window.KOB.onReady(function (ctx) {
     els.btnSound.classList.toggle('on', !!on);
     els.btnSound.classList.toggle('off', !on);
   }
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    if (els.btnTheme) els.btnTheme.classList.toggle('on', t === 'light');
+    try { localStorage.setItem('kob.theme', t); } catch (e) { }
+  }
+  setTheme(document.documentElement.getAttribute('data-theme') || 'light');
 
   /* ---- 模式 ---- */
   function setMode(m) {

@@ -176,13 +176,23 @@ pickCdn().then(function (base) {
     };
     window.__KOB_CTX = ctx;
     prog(0.72, '编译着色器');
-    try {
-      window.KOB.ready.forEach(function (fn) { fn(ctx); });
-    } catch (e) {
-      console.error(e);
-      bootFail('模块初始化失败：' + (e && e.message));
+    var failed = [];
+    window.KOB.ready.forEach(function (fn) {
+      try { fn(ctx); }
+      catch (e) { failed.push(e); console.error('[KOB] 模块初始化失败', e); }
+    });
+    if (failed.length > 2) {   /* 超过两个模块失败才视为致命 */
+      bootFail('模块初始化失败：' + (failed[0] && failed[0].message));
       return;
     }
+    /* 稳定性：WebGL 上下文丢失/恢复 */
+    renderer.domElement.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault();
+      prog(0.5, '显卡上下文丢失，正在恢复…');
+    });
+    renderer.domElement.addEventListener('webglcontextrestored', function () {
+      prog(1, '已恢复');
+    });
     start(ctx, T, OrbitControls);
   }).catch(function (e) {
     console.error(e);
@@ -233,9 +243,9 @@ function start(ctx, T, OrbitControls) {
   /* ---- 画质 ---- */
   var TIERS = {
     low:    { budget: 0.55e6, samples: 0, dofTaps: 0,  qMul: 0.45, bloom: 1 },
-    medium: { budget: 1.0e6,  samples: 2, dofTaps: 12, qMul: 0.7,  bloom: 1 },
-    high:   { budget: 1.9e6,  samples: 2, dofTaps: 20, qMul: 1.0,  bloom: 1 },
-    ultra:  { budget: 3.6e6,  samples: 4, dofTaps: 28, qMul: 1.25, bloom: 1 }
+    medium: { budget: 1.2e6,  samples: 2, dofTaps: 14, qMul: 0.7,  bloom: 1 },
+    high:   { budget: 2.2e6,  samples: 4, dofTaps: 22, qMul: 1.0,  bloom: 1 },
+    ultra:  { budget: 4.0e6,  samples: 4, dofTaps: 28, qMul: 1.25, bloom: 1 }
   };
   var qualityName = P.quality;
   var userQuality = P.quality !== 'auto';
@@ -244,8 +254,8 @@ function start(ctx, T, OrbitControls) {
     var g = String(ctx.gpuName || '').toLowerCase();
     var mob = /android|iphone|ipad|mobile/i.test(navigator.userAgent);
     if (mob || /swiftshader|software|llvmpipe/.test(g)) return 'low';
-    if (/apple m|iris|integrated|uhd graphics|hd graphics/.test(g)) return 'medium';
-    if (/nvidia|radeon|rtx|gtx|rx \d/.test(g)) return 'high';
+    if (/iris|uhd graphics|hd graphics|integrated/.test(g)) return 'medium';
+    if (/nvidia|radeon|rtx|gtx|rx \d|arc\(?tm\)?|apple m/.test(g)) return 'high';
     return 'medium';
   }
   if (qualityName === 'auto') qualityName = autoTier();
@@ -278,9 +288,12 @@ function start(ctx, T, OrbitControls) {
   window.addEventListener('resize', resize);
   applyTier(qualityName);
 
-  /* ---- 自适应：帧率不足先降比例再降档 ---- */
-  var fpsEMA = 60, adaptT = 0, lowSteps = 0, highT = 0;
+  /* ---- 自适应：帧率不足先降比例再降档（预热 6 秒内不动作，避免启动编译卡顿误杀） ---- */
+  var fpsEMA = 60, adaptT = 0, lowSteps = 0, highT = 0, adaptWarm = 0;
   function adapt(dt) {
+    if (!started) return;
+    adaptWarm += dt;
+    if (adaptWarm < 6) return;
     fpsEMA = fpsEMA * 0.95 + (1 / Math.max(dt, 0.001)) * 0.05;
     adaptT += dt;
     if (adaptT < 2) return;
@@ -289,8 +302,8 @@ function start(ctx, T, OrbitControls) {
     if (fpsEMA < 33) {
       lowSteps++;
       var t = TIERS[qualityName];
-      if (renderScale > 0.45 && P.scale == null) {
-        renderScale = Math.max(0.45, renderScale * 0.86);
+      if (renderScale > 0.5 && P.scale == null) {
+        renderScale = Math.max(0.5, renderScale * 0.86);
         resize();
       } else if (qualityName !== 'low') {
         var order = ['low', 'medium', 'high', 'ultra'];

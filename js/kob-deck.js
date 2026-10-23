@@ -369,11 +369,12 @@ window.KOB.onReady(function (ctx) {
   function drawMap(m) {
     var cv = m.cv, g = cv.getContext('2d');
     var W2 = cv.width, H2 = cv.height;
+    var light = document.documentElement.getAttribute('data-theme') !== 'dark';
     g.clearRect(0, 0, W2, H2);
-    g.fillStyle = 'rgba(10,12,16,0.9)';
+    g.fillStyle = light ? 'rgba(244,238,226,0.95)' : 'rgba(10,12,16,0.9)';
     g.fillRect(0, 0, W2, H2);
     /* 湖 */
-    g.strokeStyle = 'rgba(64,110,150,0.55)';
+    g.strokeStyle = light ? 'rgba(64,110,170,0.6)' : 'rgba(64,110,150,0.55)';
     g.lineWidth = 26; g.lineCap = 'round'; g.lineJoin = 'round';
     g.beginPath();
     LAKE_PATH.forEach(function (p, i) {
@@ -382,25 +383,25 @@ window.KOB.onReady(function (ctx) {
     });
     g.stroke();
     /* 广场环 */
-    g.strokeStyle = 'rgba(255,236,200,0.10)';
+    g.strokeStyle = light ? 'rgba(120,90,40,0.18)' : 'rgba(255,236,200,0.10)';
     g.lineWidth = 1.5;
     var c0 = w2m(0, 0, W2, H2);
     g.beginPath(); g.ellipse(c0[0], c0[1], 176 / SPAN * W2, 150 / SPAN * H2, 0, 0, Math.PI * 2); g.stroke();
     g.beginPath(); g.ellipse(c0[0], c0[1], 430 / SPAN * W2, 400 / SPAN * H2, 0, 0, Math.PI * 2); g.stroke();
     /* 场馆椭圆 */
-    g.strokeStyle = 'rgba(240,184,90,0.8)';
+    g.strokeStyle = light ? 'rgba(160,106,28,0.9)' : 'rgba(240,184,90,0.8)';
     g.lineWidth = 2.5;
     g.beginPath(); g.ellipse(c0[0], c0[1], 170 / SPAN * W2, 144 / SPAN * H2, 0, 0, Math.PI * 2); g.stroke();
-    g.strokeStyle = 'rgba(240,184,90,0.35)';
+    g.strokeStyle = light ? 'rgba(160,106,28,0.4)' : 'rgba(240,184,90,0.35)';
     g.beginPath(); g.ellipse(c0[0], c0[1], 104 / SPAN * W2, 78 / SPAN * H2, 0, 0, Math.PI * 2); g.stroke();
     /* 舞台 */
     var st = w2m(69, 0, W2, H2);
-    g.fillStyle = 'rgba(255,120,60,0.85)';
+    g.fillStyle = 'rgba(216,82,42,0.85)';
     g.fillRect(st[0] - 19 / SPAN * W2, st[1] - 26 / SPAN * H2, 38 / SPAN * W2, 52 / SPAN * H2);
     /* 兽塔 */
     [[10, -34], [10, 34], [42, -34], [42, 34]].forEach(function (t) {
       var pt = w2m(t[0], t[1], W2, H2);
-      g.fillStyle = 'rgba(160,120,70,0.9)';
+      g.fillStyle = light ? 'rgba(140,100,50,0.9)' : 'rgba(160,120,70,0.9)';
       g.beginPath(); g.arc(pt[0], pt[1], 2.4, 0, Math.PI * 2); g.fill();
     });
     /* 相机 */
@@ -410,19 +411,20 @@ window.KOB.onReady(function (ctx) {
       g.save();
       g.translate(cp[0], cp[1]);
       g.rotate(cam.yaw);
-      g.fillStyle = 'rgba(120,200,255,0.30)';
+      g.fillStyle = 'rgba(60,140,220,0.32)';
       g.beginPath(); g.moveTo(0, 0); g.lineTo(26, -16); g.lineTo(26, 16); g.closePath(); g.fill();
-      g.fillStyle = '#9fdcff';
+      g.fillStyle = '#3a8ee0';
       g.beginPath(); g.arc(0, 0, 3.2, 0, Math.PI * 2); g.fill();
       g.restore();
     }
     /* 标记 */
+    var inkDark = light ? '#3a2f1c' : '#0a0a0a';
     if (m.mode === 'signs') {
       signsCfg.forEach(function (s, i) {
         var pt = w2m(s.x, s.y, W2, H2);
         g.fillStyle = s.color || '#f0b85a';
         g.beginPath(); g.arc(pt[0], pt[1], 5, 0, Math.PI * 2); g.fill();
-        g.fillStyle = '#0a0a0a';
+        g.fillStyle = inkDark;
         g.font = '700 7px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
         g.fillText(String(i + 1), pt[0], pt[1] + 0.5);
       });
@@ -430,12 +432,12 @@ window.KOB.onReady(function (ctx) {
       dronesCfg.forEach(function (d, i) {
         if (!d) return;
         var pt = w2m(d.x, d.y, W2, H2);
-        g.strokeStyle = '#35d5e8';
+        g.strokeStyle = '#1f9ec4';
         g.lineWidth = 1.6;
         g.beginPath(); g.arc(pt[0], pt[1], 7, 0, Math.PI * 2); g.stroke();
-        g.fillStyle = 'rgba(53,213,232,0.4)';
+        g.fillStyle = 'rgba(53,180,232,0.4)';
         g.beginPath(); g.arc(pt[0], pt[1], 7, 0, Math.PI * 2); g.fill();
-        g.fillStyle = '#bff4ff';
+        g.fillStyle = light ? '#0e6a8c' : '#bff4ff';
         g.font = '700 7px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
         g.fillText(String(i + 1), pt[0], pt[1]);
       });
