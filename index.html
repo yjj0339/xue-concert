@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>万兽之王 · 鸟巢 — King of Beasts Live</title>
+<meta name="description" content="薛之谦「万兽之王」鸟巢演唱会 · 实时三维灯光秀（非官方 · 技术演示）。纯浏览器运行：135 秒 10 章节导演秀、自由机位、特效台、灯牌与无人机编队编辑器。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;500;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@300;500;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/show.css">
+<script>
+/* =====================================================================
+   window.KOB_CONFIG — 演出默认参数（三级优先级：URL 查询参数 > data-* > 本配置 > 内置默认）
+   ─────────────────────────────────────────────────────────────────────
+   常用参数速查（完整说明见 README / DEVLOG）：
+     mode      'play' 演出模式 / 'free' 自由机位
+     t         起始时间 0–135 秒          chapter   起始章节 1–10（优先于 t）
+     speed     演出时钟倍率 0.05–4        loop      是否循环（默认 true）
+     quality   auto / low / medium / high / ultra
+     scale     固定渲染比例 0.25–2        fps       帧率上限（0 = 跟随显示器）
+     audio     首次交互后自动开声         volume    主音量 0–1
+     ui        界面开关                   letterbox 演出模式 2.2:1 电影黑边
+     ev        曝光补偿 -4…+4 档
+     bloom / flare / grain / haze          泛光/拉丝/颗粒/烟雾 密度倍率 0–4
+     dof / mblur / shake                   景深/运动模糊/抖动倍率
+     fireworks / crowd / drones            密度倍率 0–3
+     view      自由模式初始机位 0–15      seed      人群/火焰随机种子
+     stats     显示帧率/分辨率/GPU         cdn       强制 jsdelivr/unpkg/npmmirror
+     gate      启动入场页（默认开）        autohide  界面自动隐藏秒数（默认 3.5）
+     sign / signColor / signStyle / signAnim / ticker   第一块灯牌与跑马灯
+     drone / droneShape / droneColor / droneFx / droneSpot  无人机编队
+   示例：?mode=free&view=6&quality=ultra　?chapter=9&speed=0.5
+         ?sign=鸟巢见&signColor=gold&ticker=true　?drone=薛之谦&droneShape=text
+   ===================================================================== */
+window.KOB_CONFIG = {
+  /* mode: 'play', t: 0, speed: 1, quality: 'auto', volume: 0.8 —— 留空即用默认 */
+};
+</script>
+</head>
+<body>
+<canvas id="kob-canvas"></canvas>
+
+<!-- 电影黑边（演出模式 2.2:1） -->
+<div class="kob-letterbox" id="kob-lt"></div>
+<div class="kob-letterbox bottom" id="kob-lb"></div>
+
+<!-- 顶栏 -->
+<header class="kob-topbar" id="kob-topbar">
+  <div class="kob-brand">
+    <span class="kob-logo">万兽之王</span>
+    <span class="kob-logo-en">KING OF BEASTS LIVE · 鸟巢</span>
+  </div>
+  <div class="kob-clock-wrap">
+    <span class="kob-chapname" id="kob-chapname">01 · 序幕 · 巢外</span>
+    <span class="kob-clock" id="kob-clock">0:00 / 2:15</span>
+  </div>
+  <div class="kob-topbtns">
+    <button class="kob-ibtn off" id="kob-btn-sound" title="声音 (M)">
+      <svg viewBox="0 0 24 24" class="ic ic-on"><path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 8a5 5 0 0 1 0 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" class="ic ic-off"><path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button class="kob-ibtn" id="kob-btn-quality" title="画质">
+      <svg viewBox="0 0 24 24"><path d="M12 4l2.4 5.2L20 10l-4 3.8.9 5.6L12 16.8 7.1 19.4 8 13.8 4 10l5.6-.8L12 4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="kob-qmenu" id="kob-qmenu"></div>
+    <button class="kob-ibtn" id="kob-btn-full" title="全屏 (F)">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button class="kob-ibtn" id="kob-btn-hide" title="隐藏界面 (H)">
+      <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- 底栏 -->
+<footer class="kob-bottombar" id="kob-bottombar">
+  <div class="kob-modes">
+    <button class="kob-mode on" id="kob-mode-play">演出<span>SHOW</span></button>
+    <button class="kob-mode" id="kob-mode-free">自由<span>EXPLORE</span></button>
+    <button class="kob-playbtn" id="kob-btn-play" title="暂停/继续 (K)">❚❚</button>
+  </div>
+  <div class="kob-timeline-wrap">
+    <div class="kob-timeline" id="kob-timeline"></div>
+    <div class="kob-tl-hover" id="kob-tl-hover"></div>
+  </div>
+  <div class="kob-deck-hint">灯牌 · 无人机 · 特效台在左侧</div>
+</footer>
+
+<!-- 自由模式回到演出 -->
+<button class="kob-backshow" id="kob-backshow">回到演出 · BACK TO THE SHOW</button>
+
+<!-- 章节字卡 -->
+<div class="kob-chapter-card" id="kob-chapter-card">
+  <div class="kob-cc-n">01</div>
+  <div class="kob-cc-t"><div class="kob-cc-cn">序幕 · 巢外</div><div class="kob-cc-en">OUTSIDE</div></div>
+</div>
+
+<!-- 开场 / 谢幕字卡 -->
+<div class="kob-title-card" id="kob-title-card">
+  <div class="kob-tc-cn">万兽之王</div>
+  <div class="kob-tc-en">KING OF BEASTS LIVE</div>
+</div>
+
+<!-- 隐藏界面后的眼睛 -->
+<button class="kob-eye" id="kob-eye" title="唤回界面">
+  <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+</button>
+
+<!-- 统计 -->
+<div class="kob-stats" id="kob-stats"></div>
+
+<!-- 启动画面 + 入场门 -->
+<div class="kob-boot" id="kob-boot">
+  <div class="kob-boot-inner">
+    <div class="kob-boot-kicker">北京 · 国家体育场 · 鸟巢</div>
+    <h1 class="kob-boot-title">万兽之王</h1>
+    <div class="kob-boot-sub">KING OF BEASTS LIVE · 实时三维灯光秀</div>
+    <div class="kob-boot-bar-wrap"><div class="kob-boot-bar" id="kob-boot-bar"></div></div>
+    <div class="kob-boot-msg" id="kob-boot-msg">正在启动…</div>
+    <div class="kob-boot-hint" id="kob-boot-hint">非官方 · 仅供技术交流 · 版权归权利方所有</div>
+    <div class="kob-enter" id="kob-enter">
+      <button class="kob-enter-btn main" id="kob-enter-sound">进入演出 · ENTER WITH SOUND</button>
+      <button class="kob-enter-btn" id="kob-enter-mute">静音进入 · Enter silently</button>
+      <div class="kob-enter-tip">浏览器要求点击后才能开启声音 · 之后按 M 切换</div>
+    </div>
+  </div>
+</div>
+
+<!-- 经典 script 顺序加载（非 ES Modules） -->
+<script src="js/kob-params.js"></script>
+<script src="js/kob-glsl.js"></script>
+<script src="js/kob-show.js"></script>
+<script src="js/kob-fx.js"></script>
+<script src="js/kob-sfx.js"></script>
+<script src="js/kob-world.js"></script>
+<script src="js/kob-post.js"></script>
+<script src="js/kob-ui.js"></script>
+<script src="js/kob-deck.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/model-data.js"></script>
+<script src="js/kob-main.js" id="kob-main"></script>
+</body>
+</html>
