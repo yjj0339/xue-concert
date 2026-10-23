@@ -32,7 +32,11 @@ function parseNum(v, def) {
   return isFinite(n) ? n : def;
 }
 function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
-function clampNum(v, def, a, b) { return clamp(parseNum(v, def), a, b); }
+function clampNum(v, def, a, b) {
+  var n = parseFloat(v);
+  if (!isFinite(n)) return def;   // 未指定时保持默认（含 null），不落入钳制下限
+  return clamp(n, a, b);
+}
 function parseEnum(v, list, def) {
   if (v === null || v === undefined || v === '') return def;
   var s = String(v).toLowerCase();
